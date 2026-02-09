@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: 1
+      author: fidel.zarco
+      runAlways: true
+      labels: example-label
+      context: example-context
+      comment: example-comment
+      changes:
+        - sqlFile:
+            path: migrations/migration-07-02-2026.sql
+            relativeToChangelogFile: true
