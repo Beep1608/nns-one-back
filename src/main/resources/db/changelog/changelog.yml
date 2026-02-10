@@ -1,12 +1,23 @@
 databaseChangeLog:
   - changeSet:
       id: 1
-      author: fidel.zarco
+      author: 07022026-migration
       runAlways: true
-      labels: example-label
-      context: example-context
-      comment: example-comment
+      labels: migration
+      context: default
+      comment: Tablas de usuarios, productos y ventas
       changes:
         - sqlFile:
             path: migrations/migration-07-02-2026.sql
+            relativeToChangelogFile: true
+  - changeSet:
+      id: 09022026-seeder-dev
+      author: fidel.zarco
+      runAlways: true
+      labels: seeder
+      context: develop
+      comment: Insercion de usuarios para ambiente [DEVELOP]
+      changes:
+        - sqlFile:
+            path: seeders/seeder-09-02-2026.sql
             relativeToChangelogFile: true

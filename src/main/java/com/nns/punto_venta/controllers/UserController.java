@@ -37,26 +37,26 @@ public class UserController {
     // Obtener uno por ID: GET http://localhost:8080/api/users/1
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getById(@PathVariable Integer id) {
-        // El service ya lanza excepción o maneja el DTO, así que es directo
+        
         return ResponseEntity.ok(userService.findById(id));
     }
 
     // Crear un usuario: POST http://localhost:8080/api/users
     @PostMapping
     public ResponseEntity<UserResponseDto> create(@RequestBody UserRequestDto userDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(userDto));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userDto));
     }
 
     // Actualizar un usuario: PUT http://localhost:8080/api/users/1
     @PutMapping("/{id}")
     public ResponseEntity<UserResponseDto> update(@PathVariable Integer id, @RequestBody UserRequestDto userDto) {
-        return ResponseEntity.ok(userService.update(id, userDto));
+        return ResponseEntity.ok(userService.updateUser(id, userDto));
     }
 
     // Eliminar un usuario: DELETE http://localhost:8080/api/users/1
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> delete(@PathVariable Integer id) {
-        userService.delete(id);
+        userService.deleteUser(id);
         return ResponseEntity.noContent().build();
     }
 }

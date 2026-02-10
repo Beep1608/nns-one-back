@@ -34,13 +34,6 @@ public class SaleController {
         return ResponseEntity.ok(saleService.findAll());
     }
 
-    // Crear una venta simple: POST http://localhost:8080/api/sales
-    @PostMapping
-    public ResponseEntity<SaleResponseDto> create(@RequestBody SaleRequestDto saleRequestDto) {
-        // Usamos el método que asocia el usuario y guarda el monto
-        SaleResponseDto sale = saleService.createSale(saleRequestDto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(sale);
-    }
 
     // Venta con descuento de stock: POST http://localhost:8080/api/sales/process
     @PostMapping("/process")
@@ -48,7 +41,7 @@ public class SaleController {
             @RequestBody SaleRequestDto saleRequestDto, 
             @RequestParam Integer quantity) {
         
-        // Este método descuenta stock, calcula el total y registra la venta
+        
         SaleResponseDto sale = saleService.processProductSale(saleRequestDto, quantity);
         return ResponseEntity.status(HttpStatus.CREATED).body(sale);
     }

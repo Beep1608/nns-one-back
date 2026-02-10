@@ -45,7 +45,7 @@ public class UserService {
 
     // Crear un usuario (Recibimos RequestDto y devolvemos ResponseDto)
     @Transactional
-    public UserResponseDto save(UserRequestDto dto) {
+    public UserResponseDto createUser(UserRequestDto dto) {
         // 1. Convertimos DTO a Entidad
         UserEntity userEntity = userMapper.toEntity(dto);
         
@@ -60,7 +60,7 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponseDto update(Integer id, UserRequestDto dto) { 
+    public UserResponseDto updateUser(Integer id, UserRequestDto dto) { 
         // 1. Buscamos el usuario existente
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
@@ -80,7 +80,7 @@ public class UserService {
 
     // Eliminar un usuario
     @Transactional
-    public void delete(Integer id) {
+    public void deleteUser(Integer id) {
         if (!userRepository.existsById(id)) {
             throw new RuntimeException("No se puede eliminar: Usuario no encontrado");
         }
