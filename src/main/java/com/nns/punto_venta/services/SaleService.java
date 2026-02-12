@@ -1,9 +1,12 @@
 package com.nns.punto_venta.services;
 
+
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.util.List;
 
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -90,4 +93,57 @@ public class SaleService {
         
         saleRepository.save(sale);
     }
+
+    @Transactional(readOnly = true)
+    public List<SaleResponseDto> searchSalesByQuery(String query) {
+        // La lógica de búsqueda ahora incluye la columna de cantidad convertida a texto
+        return saleRepository.searchSales(query)
+                .stream()
+                .map(saleMapper::toResponseDto)
+                .toList();
+    }
+
+    @Transactional(readOnly = true)
+public List<SaleResponseDto> findByAdvancedFilters(
+        Integer userId, 
+        BigDecimal totalAmount, 
+        String status, 
+        LocalDate createdDate, 
+        LocalDate updatedDate, 
+        boolean includeDeleted) {
+
+    Specification<SaleEntity> spec = Specification.where((Specification<SaleEntity>) null);
+
+    // 1. Filtro por Usuario
+    if (userId != null) {
+        spec = spec.and((root, query, cb) -> cb.equal(root.get("user").get("id"), userId));
+    }
+
+    // 2. Filtro por Monto Total (exacto)
+    if (totalAmount != null) {
+        spec = spec.and((root, query, cb) -> cb.equal(root.get("totalAmount"), totalAmount));
+    }
+
+    // 3. Filtro por Estatus
+    if (status != null && !status.isEmpty()) {
+        spec = spec.and((root, query, cb) -> cb.equal(root.get("status"), status));
+    }
+
+    // 4. Filtro por Fecha de Creación (asumiendo que es un campo LocalDateTime/OffsetDateTime)
+    if (createdDate != null) {
+        spec = spec.and((root, query, cb) -> {
+            return cb.between(root.get("createdAt"), createdDate.atStartOfDay(), createdDate.plusDays(1).atStartOfDay());
+        });
+    }
+
+    // 5. Borrado Lógico
+    // Si includeDeleted es false, solo mostramos los que tienen deletedAt NULL
+    if (!includeDeleted) {
+        spec = spec.and((root, query, cb) -> cb.isNull(root.get("deletedAt")));
+    }
+
+    return saleRepository.findAll(spec).stream()
+            .map(saleMapper::toResponseDto)
+            .toList();
+}
 }

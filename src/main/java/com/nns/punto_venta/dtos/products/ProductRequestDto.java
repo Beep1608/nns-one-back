@@ -10,6 +10,13 @@ public class ProductRequestDto {
     private Integer userId;
 
     // Constructor vacío (necesario para frameworks como Jackson)
+    public ProductRequestDto(String name, BigDecimal price, Integer stock, Integer userId)
+    {
+        this.name=name;
+        this.price =price;
+        this.stock= stock;
+        this.userId = userId;
+    }
     public ProductRequestDto() {}
 
     // Getters y Setters

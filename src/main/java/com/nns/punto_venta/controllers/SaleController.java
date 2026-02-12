@@ -1,8 +1,11 @@
 package com.nns.punto_venta.controllers;
 
 
+import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -56,5 +59,27 @@ public class SaleController {
         
         saleService.cancelSale(id, productId, quantity);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<SaleResponseDto>> searchSales(@RequestParam String query) {
+        
+        List<SaleResponseDto> sales = saleService.searchSalesByQuery(query);
+        return ResponseEntity.ok(sales);
+    }
+
+    @GetMapping("/filter")
+    public ResponseEntity<List<SaleResponseDto>> filterSales(
+            @RequestParam(required = false) Integer userId,
+            @RequestParam(required = false) BigDecimal totalAmount,
+            @RequestParam(required = false) String status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate createdDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate updatedDate,
+            @RequestParam(defaultValue = "false") boolean includeDeleted) {
+            
+        List<SaleResponseDto> results = saleService.findByAdvancedFilters(
+                userId, totalAmount, status, createdDate, updatedDate, includeDeleted);
+                
+        return ResponseEntity.ok(results);
     }
 }
