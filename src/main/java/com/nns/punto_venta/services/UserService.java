@@ -29,7 +29,7 @@ public class UserService {
     // Obtener todos los usuarios
     @Transactional(readOnly = true)
     public List<UserResponseDto> findAll() {
-        List<UserEntity> users = userRepository.findAll();
+        List<UserEntity> users = userRepository.findAllByOrderByCreatedAtDesc();
         return users.stream()
                     .map(userMapper::toResponse)
                     .toList();
