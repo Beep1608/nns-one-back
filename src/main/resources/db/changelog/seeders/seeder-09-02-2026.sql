@@ -9,7 +9,7 @@ SELECT
     '$2a$10$8.UnVuG9HHgffUDAlk8qfOuVGkqRzgVymGe07xd00DMxs.zUbZb1a',
     -- Genera una fecha aleatoria entre hoy y hace 30 días
     NOW() - (random() * interval '30 days')
-FROM generate_series(1, 10) AS gs
+FROM generate_series(1, 20) AS gs
 WHERE NOT EXISTS (
     SELECT 1 FROM users WHERE username = 'user_' || gs
 );

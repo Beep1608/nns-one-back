@@ -4,6 +4,9 @@ import java.time.OffsetDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
 import java.util.Set;
+import java.util.stream.Collectors;
+
+import org.springframework.util.StringUtils;
 
 public class UserResponseDto {
     private Integer id;
@@ -42,10 +45,14 @@ public class UserResponseDto {
     }
 
     public Set<String> getRoles() { return roles; }
-    public void setRoles(Set<String> roles) { this.roles = roles; }
+    public void setRoles(Set<String> roles) { 
+        this.roles= roles.stream().map(rol -> StringUtils.capitalize(rol)).collect(Collectors.toSet());
+    }
 
     public Set<String> getPermissions() { return permissions; }
-    public void setPermissions(Set<String> permissions) { this.permissions = permissions; }
+    public void setPermissions(Set<String> permissions) { 
+        this.permissions = permissions.stream().map(permission -> StringUtils.capitalize(permission)).collect(Collectors.toSet()); 
+    }
 
     private String formatDate(OffsetDateTime date) {
         if (date == null) return null;
@@ -53,5 +60,6 @@ public class UserResponseDto {
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd MMM, yyyy HH:mm", locale);
         return date.format(formatter);
     }
+
     
 }
