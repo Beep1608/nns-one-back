@@ -40,3 +40,10 @@ SELECT
 FROM generate_series(1, 10) AS gs;
 
 
+
+--Insertamos 10 ventas de prueba 
+INSERT INTO sales (user_id, total_amount, status)
+SELECT 
+    (SELECT id FROM users LIMIT 1),
+    (random() * (1000 - 20)+20)::decimal(12,2),
+    'COMPLETED'

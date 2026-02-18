@@ -71,7 +71,7 @@ create table sales (
     id serial primary key,
     user_id int not null, 
     total_amount decimal(12, 2) not null default 0.00,
-    status varchar(20) default 'PENDIENTE', 
+    status varchar(20) default 'PENDING', 
     
     created_at timestamp with time zone default CURRENT_TIMESTAMP,
     updated_at timestamp with time zone default CURRENT_TIMESTAMP,

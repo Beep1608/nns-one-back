@@ -21,8 +21,15 @@ import com.nns.punto_venta.dtos.sales.SaleRequestDto;
 import com.nns.punto_venta.dtos.sales.SaleResponseDto;
 import com.nns.punto_venta.services.SaleService;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.tags.Tag;
+
 @RestController
 @RequestMapping("/api/sales")
+@Tag(name="Ventas", description="Operaciones relacionadas con las ventas")
 public class SaleController {
 
     private final SaleService saleService;
@@ -33,6 +40,9 @@ public class SaleController {
 
     // Listar todas las ventas: GET http://localhost:8080/api/sales
     @GetMapping
+    @Operation(summary = "Listar todas las ventas", description = "Devuelve una lista de todas las ventas registradas en el sistema.")
+    @ApiResponse(responseCode = "200", description = "Lista de ventas obtenida exitosamente", content=@Content(mediaType="application/json", schema=@Schema(implementation=SaleResponseDto.class)))
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor", content=@Content(mediaType="application/json"))
     public ResponseEntity<List<SaleResponseDto>> getAll() {
         return ResponseEntity.ok(saleService.findAll());
     }
@@ -40,6 +50,10 @@ public class SaleController {
 
     // Venta con descuento de stock: POST http://localhost:8080/api/sales/process
     @PostMapping("/process")
+    @Operation(summary = "Procesar una venta con descuento de stock", description = "Procesa una venta de un producto, aplicando el descuento de stock correspondiente.")
+    @ApiResponse(responseCode = "201", description = "Venta procesada exitosamente", content=@Content(mediaType="application/json", schema=@Schema(implementation=SaleResponseDto.class)))
+    @ApiResponse(responseCode = "400", description = "Solicitud inválida", content=@Content(mediaType="application/json"))
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor", content=@Content(mediaType="application/json"))
     public ResponseEntity<SaleResponseDto> processSale(
             @RequestBody SaleRequestDto saleRequestDto, 
             @RequestParam Integer quantity) {
@@ -52,6 +66,10 @@ public class SaleController {
     // Cancelar una venta: DELETE http://localhost:8080/api/sales/1
     // Nota: Requerimos el productId y quantity para devolver el stock al almacén
     @DeleteMapping("/{id}/cancel")
+    @Operation(summary = "Cancelar una venta", description = "Cancela una venta específica del sistema, devolviendo el stock al almacén.")
+    @ApiResponse(responseCode = "204", description = "Venta cancelada exitosamente")
+    @ApiResponse(responseCode = "404", description = "Venta no encontrada", content=@Content(mediaType="application/json"))
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor", content=@Content(mediaType="application/json"))
     public ResponseEntity<Void> cancel(
             @PathVariable Integer id, 
             @RequestParam Integer productId, 
@@ -62,6 +80,9 @@ public class SaleController {
     }
 
     @GetMapping("/search")
+    @Operation(summary = "Buscar ventas por consulta", description = "Busca ventas que coincidan con una consulta de texto en campos relevantes como el nombre del producto o el nombre del usuario.")
+    @ApiResponse(responseCode = "200", description = "Ventas encontradas exitosamente", content=@Content(mediaType="application/json", schema=@Schema(implementation=SaleResponseDto.class)))
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor", content=@Content(mediaType="application/json"))
     public ResponseEntity<List<SaleResponseDto>> searchSales(@RequestParam String query) {
         
         List<SaleResponseDto> sales = saleService.searchSalesByQuery(query);
@@ -69,6 +90,9 @@ public class SaleController {
     }
 
     @GetMapping("/filter")
+    @Operation(summary = "Filtrar ventas por múltiples criterios", description = "Filtra las ventas según múltiples criterios como ID de usuario, monto total, estado, fechas de creación o actualización, y si se incluyen ventas eliminadas.")
+    @ApiResponse(responseCode = "200", description = "Ventas filtradas exitosamente", content=@Content(mediaType="application/json", schema=@Schema(implementation=SaleResponseDto.class)))
+    @ApiResponse(responseCode = "500", description = "Error interno del servidor", content=@Content(mediaType="application/json"))
     public ResponseEntity<List<SaleResponseDto>> filterSales(
             @RequestParam(required = false) Integer userId,
             @RequestParam(required = false) BigDecimal totalAmount,

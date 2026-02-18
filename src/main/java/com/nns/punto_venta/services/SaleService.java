@@ -15,6 +15,7 @@ import com.nns.punto_venta.dtos.sales.SaleRequestDto;
 import com.nns.punto_venta.dtos.sales.SaleResponseDto;
 import com.nns.punto_venta.entities.SaleEntity;
 import com.nns.punto_venta.entities.UserEntity;
+import com.nns.punto_venta.exceptions.sales.SaleNotFoundException;
 import com.nns.punto_venta.mappers.sales.SaleMapper;
 import com.nns.punto_venta.repositories.SaleRepository;
 import com.nns.punto_venta.repositories.UserRepository;
@@ -83,7 +84,7 @@ public class SaleService {
     @Transactional
     public void cancelSale(Integer saleId, Integer productId, Integer quantity) {
         SaleEntity sale = saleRepository.findById(saleId)
-                .orElseThrow(() -> new RuntimeException("Venta no encontrada"));
+                .orElseThrow(() -> new SaleNotFoundException("Venta no encontrada"));
         
         sale.setStatus("CANCELADA");
         sale.setDeletedAt(OffsetDateTime.now());
@@ -104,7 +105,7 @@ public class SaleService {
     }
 
     @Transactional(readOnly = true)
-public List<SaleResponseDto> findByAdvancedFilters(
+    public List<SaleResponseDto> findByAdvancedFilters(
         Integer userId, 
         BigDecimal totalAmount, 
         String status, 

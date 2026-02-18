@@ -25,6 +25,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.nns.punto_venta.dtos.users.UserRequestDto;
 import com.nns.punto_venta.dtos.users.UserResponseDto;
+import com.nns.punto_venta.dtos.users.UserUpdateRequestDto;
 import com.nns.punto_venta.services.UserService;
 
 import tools.jackson.databind.ObjectMapper;
@@ -121,7 +122,7 @@ public class UserControllerTest {
         // Configuramos el Mock
         // Usamos eq(userId) para asegurar que el ID sea exactamente 1
         // Usamos any() para el DTO porque Spring creará una instancia nueva al recibir el JSON
-        when(userService.updateUser(eq(userId), any(UserRequestDto.class))).thenReturn(response);
+        when(userService.updateUser(eq(userId), any(UserUpdateRequestDto.class))).thenReturn(response);
 
 
         mockMvc.perform(put("/api/users/{id}", userId) // Notar el /{id}
