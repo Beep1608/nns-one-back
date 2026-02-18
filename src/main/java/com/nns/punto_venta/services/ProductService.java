@@ -11,6 +11,7 @@ import com.nns.punto_venta.dtos.products.ProductRequestDto;
 import com.nns.punto_venta.dtos.products.ProductResponseDto;
 import com.nns.punto_venta.entities.ProductEntity;
 import com.nns.punto_venta.entities.UserEntity;
+import com.nns.punto_venta.exceptions.products.ProductNotFoundException;
 import com.nns.punto_venta.mappers.products.ProductMapper;
 import com.nns.punto_venta.repositories.ProductRepository;
 import com.nns.punto_venta.repositories.UserRepository;
@@ -43,7 +44,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductResponseDto findProductById(Integer id) {
         ProductEntity entity = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Producto no encontrado con ID: " + id));
+                .orElseThrow(() -> new ProductNotFoundException("Producto no encontrado con ID: " + id));
         return productMapper.toResponseDto(entity);
     }
 

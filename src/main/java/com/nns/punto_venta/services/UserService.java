@@ -8,7 +8,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.nns.punto_venta.dtos.users.UserRequestDto;
 import com.nns.punto_venta.dtos.users.UserResponseDto;
+import com.nns.punto_venta.dtos.users.UserUpdateRequestDto;
 import com.nns.punto_venta.entities.UserEntity;
+import com.nns.punto_venta.exceptions.users.UserNotFoundException;
 import com.nns.punto_venta.mappers.users.UserMapper;
 import com.nns.punto_venta.repositories.UserRepository;
 
@@ -40,7 +42,7 @@ public class UserService {
     public UserResponseDto findById(Integer id) {
         return userRepository.findById(id)
                     .map(userMapper::toResponse)
-                    .orElseThrow(() -> new RuntimeException("Usuarios no encontrado con ID: " + id));
+                    .orElseThrow(() -> new UserNotFoundException("Usuarios no encontrado con ID: " + id));
     }
 
     // Crear un usuario (Recibimos RequestDto y devolvemos ResponseDto)
@@ -60,10 +62,10 @@ public class UserService {
     }
 
     @Transactional
-    public UserResponseDto updateUser(Integer id, UserRequestDto dto) { 
+    public UserResponseDto updateUser(Integer id, UserUpdateRequestDto dto) { 
         // 1. Buscamos el usuario existente
         UserEntity user = userRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Usuario no encontrado con ID: " + id));
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
 
         // 2. Actualizamos los campos básicos
         user.setUsername(dto.getUsername());
@@ -82,7 +84,7 @@ public class UserService {
     @Transactional
     public void deleteUser(Integer id) {
         if (!userRepository.existsById(id)) {
-            throw new RuntimeException("No se puede eliminar: Usuario no encontrado");
+            throw new UserNotFoundException("Usuario no encontrado con ID: " + id);
         }
         userRepository.deleteById(id);
     }
