@@ -1,19 +1,62 @@
 services:
+  # 1. La Base de Datos
   db:
     image: postgres:15-alpine
+    container_name: postgres-db
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
-    # ... resto de la configuración
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
+    networks:
+      - backend_network
+    volumes:
+      - db_data:/var/lib/postgresql/data
+
+  # 2. El "Migrador" (Ejecuta Liquibase vía Maven)
+  # Este contenedor se apaga solo al terminar
+  db-migrator:
+    build: .
+    container_name: liquibase-migrator
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+    # Sobrescribimos el ENTRYPOINT para ejecutar el plugin de Maven
+    entrypoint: >
+      ./mvnw liquibase:update 
+      -Dliquibase.url=$${DB_URL} 
+      -Dliquibase.username=$${DB_USER} 
+      -Dliquibase.password=$${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # 3. Tu App Spring Boot
   app:
     build: .
+    container_name: spring-app
     ports:
-      - "${SPRING_PORT}:8080"
+      - "${SPRING_PORT}:${SPRING_PORT}"
     environment:
       SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${DB_NAME}
       SPRING_DATASOURCE_USERNAME: ${DB_USER}
       SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD}
+      SPRING_LIQUIBASE_ENABLED: "false" # Importante: Spring no hace nada
+    networks:
+      - backend_network
     depends_on:
-      - db
+      db-migrator:
+        condition: service_completed_successfully
+
+volumes:
+  db_data:
+
+networks:
+  backend_network:
+    driver: bridge
