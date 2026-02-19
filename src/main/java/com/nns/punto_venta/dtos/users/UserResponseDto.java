@@ -6,9 +6,15 @@ import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 import org.springframework.util.StringUtils;
 
-public class UserResponseDto {
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+@Relation(collectionRelation = "users", itemRelation = "user")
+@JsonPropertyOrder({ "id", "username", "roles", "permissions", "createdAt", "lastActiveAt", "_links" })
+public class UserResponseDto extends RepresentationModel<UserResponseDto> {
     private Integer id;
     private String username;
     private String createdAt;

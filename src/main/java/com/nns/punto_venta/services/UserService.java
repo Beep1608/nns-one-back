@@ -2,6 +2,8 @@ package com.nns.punto_venta.services;
 
 import java.util.List;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -30,11 +32,9 @@ public class UserService {
 
     // Obtener todos los usuarios
     @Transactional(readOnly = true)
-    public List<UserResponseDto> findAll() {
-        List<UserEntity> users = userRepository.findAllByOrderByCreatedAtDesc();
-        return users.stream()
-                    .map(userMapper::toResponse)
-                    .toList();
+    public Page<UserEntity> findAll(Pageable pageable) {
+     
+        return userRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
     // Buscar un usuario por ID
