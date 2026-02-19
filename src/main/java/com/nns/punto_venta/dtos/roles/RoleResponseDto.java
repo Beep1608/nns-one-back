@@ -1,7 +1,12 @@
 package com.nns.punto_venta.dtos.roles;
 
 import org.springframework.hateoas.RepresentationModel;
+import org.springframework.hateoas.server.core.Relation;
 
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
+
+@Relation(collectionRelation = "roles", itemRelation = "rol")
+@JsonPropertyOrder({ "id", "name", "_links" })
 public class RoleResponseDto extends RepresentationModel<RoleResponseDto> {
     
     private Integer id;
