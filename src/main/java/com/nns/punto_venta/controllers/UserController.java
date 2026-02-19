@@ -3,6 +3,10 @@ package com.nns.punto_venta.controllers;
 import java.util.List;
 
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PagedResourcesAssembler;
+import org.springframework.hateoas.PagedModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -13,9 +17,11 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nns.punto_venta.assemblers.UserModelAssembler;
 import com.nns.punto_venta.dtos.users.UserRequestDto;
 import com.nns.punto_venta.dtos.users.UserResponseDto;
 import com.nns.punto_venta.dtos.users.UserUpdateRequestDto;
+import com.nns.punto_venta.entities.UserEntity;
 import com.nns.punto_venta.services.UserService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,17 +37,23 @@ import jakarta.validation.Valid;
 public class UserController {
 
     private UserService userService;
+    private UserModelAssembler userAssembler;
 
-    public UserController(UserService userService)
+    public UserController(UserService userService, UserModelAssembler userAssembler)
     {
         this.userService = userService;
+        this.userAssembler = userAssembler;
     }
 
     // Obtener todos los usuarios: GET http://localhost:8080/api/users
     @GetMapping
     @Operation(summary = "Obtener todos los usuarios", description = "Devuelve una lista de todos los usuarios registrados en el sistema.")
-    public ResponseEntity<List<UserResponseDto>> getAll() {
-        return ResponseEntity.ok(userService.findAll());
+    public ResponseEntity<PagedModel<UserResponseDto>> getAll(
+        @ParameterObject Pageable pageable,
+        PagedResourcesAssembler<UserEntity> pagedAssembler
+    ) {
+        Page<UserEntity> users = userService.findAll(pageable);
+        return ResponseEntity.ok(pagedAssembler.toModel(users,this.userAssembler));
     }
     
     // Obtener uno por ID: GET http://localhost:8080/api/users/1

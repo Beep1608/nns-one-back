@@ -11,6 +11,10 @@ import static org.mockito.Mockito.when;
 import static org.mockito.internal.verification.VerificationModeFactory.times;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,6 +30,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.nns.punto_venta.dtos.users.UserRequestDto;
 import com.nns.punto_venta.dtos.users.UserResponseDto;
 import com.nns.punto_venta.dtos.users.UserUpdateRequestDto;
+import com.nns.punto_venta.entities.UserEntity;
 import com.nns.punto_venta.services.UserService;
 
 import tools.jackson.databind.ObjectMapper;
@@ -50,24 +55,45 @@ public class UserControllerTest {
     }
 
     @Test
-    @DisplayName("Debe retornar 200 y lista de usuarios al consultar GET /api/users")
-    void getAll_Success() throws Exception
-    {
-        var users = List.of(
-            new UserResponseDto(1, "Minion"),
-            new UserResponseDto(2, "Fidel"),
-            new UserResponseDto(3, "Chetos")
-        );
-
-        when(userService.findAll()).thenReturn(users);
-
+    @DisplayName("Debe retornar 200 y formato HAL con enlaces al consultar GET /api/users")
+    void getAll_Success() throws Exception {
+        // 1. IMPORTANTE: El servicio ahora devuelve ENTIDADES
+        UserEntity user1 = new UserEntity(); // Configura los campos necesarios (id, username, etc.)
+        user1.setId(1);
+        user1.setUsername("Minion");
         
-        mockMvc.perform(get("/api/users"))
+        UserEntity user2 = new UserEntity();
+        user2.setId(2);
+        user2.setUsername("Fidel");
+        
+        List<UserEntity> entities = List.of(user1, user2);
+        Page<UserEntity> userPage = new PageImpl<>(entities, PageRequest.of(0, 10), 2);
+        
+        // 2. Mockeamos el servicio devolviendo la página de entidades
+        when(userService.findAll(any(Pageable.class))).thenReturn(userPage);
+        
+        // 3. Ejecución y validación de la estructura HAL
+        mockMvc.perform(get("/api/users")
+                .param("page", "0")
+                .param("size", "10")
+                .contentType(MediaType.APPLICATION_JSON))
             .andExpect(status().isOk())
-            .andExpect(content().contentType(MediaType.APPLICATION_JSON))
-            .andExpect(jsonPath("$.size()").value(3))
-            .andExpect(jsonPath("$[0].username").value("Minion"));
-     
+            .andExpect(content().contentType("application/hal+json")) // El Content-Type cambia a HAL
+            
+            // 4. Validamos los datos embebidos (la lista de usuarios)
+            // Nota: El nombre "userResponseDtoList" depende de cómo se llame tu clase DTO
+            .andExpect(jsonPath("$._embedded.userResponseDtoList.size()").value(2))
+            .andExpect(jsonPath("$._embedded.userResponseDtoList[0].username").value("Minion"))
+            
+            // 5. Validamos los enlaces HATEOAS
+            .andExpect(jsonPath("$._links.self.href").exists())
+            .andExpect(jsonPath("$._embedded.userResponseDtoList[0]._links.self.href").exists())
+            
+            // 6. Validamos los metadatos de página (ahora dentro de "page")
+            .andExpect(jsonPath("$.page.size").value(10))
+            .andExpect(jsonPath("$.page.totalElements").value(2))
+            .andExpect(jsonPath("$.page.totalPages").value(1))
+            .andExpect(jsonPath("$.page.number").value(0));
     }
 
 
