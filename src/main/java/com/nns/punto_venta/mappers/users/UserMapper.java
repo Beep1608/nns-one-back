@@ -1,5 +1,7 @@
 package com.nns.punto_venta.mappers.users;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -18,7 +20,7 @@ import com.nns.punto_venta.entities.UserEntity;
 public interface UserMapper {
 
     @Mapping(target = "roles", source = "roles", qualifiedByName = "mapRoles")
-    @Mapping(target = "permissions", source = "roles", qualifiedByName = "mapPermissions")
+    //@Mapping(target = "permissions", source = "roles", qualifiedByName = "mapPermissions")
     UserResponseDto toResponse(UserEntity entity);
 
 
@@ -29,7 +31,21 @@ public interface UserMapper {
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "products", ignore = true)
     @Mapping(target = "sales", ignore = true)
+    @Mapping(target = "roles", ignore = true)
     UserEntity toEntity(UserRequestDto dto);
+    
+    // 1. Convierte List<Long> -> Set<RoleEntity>
+    @Named("idsToEntities")
+    default Set<RoleEntity> idsToEntities(List<Long> roleIds) {
+        if (roleIds == null) return new HashSet<>();
+        return roleIds.stream()
+                .map(id -> {
+                    RoleEntity role = new RoleEntity();
+                    role.setId(id);
+                    return role;
+                })
+                .collect(Collectors.toSet());
+    }
     
     @Named("mapRoles")
     default Set<String> mapRoles(Set<RoleEntity> roles) {

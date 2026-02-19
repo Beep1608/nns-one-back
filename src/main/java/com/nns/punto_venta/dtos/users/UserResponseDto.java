@@ -21,18 +21,18 @@ public class UserResponseDto extends RepresentationModel<UserResponseDto> {
     private String lastActiveAt;
 
     private Set<String> roles;
-    private Set<String> permissions;
+    //private Set<String> permissions;
 
 
     public UserResponseDto(){}
     public UserResponseDto(Integer id, String username){this.id=id; this.username=username;}
-    public UserResponseDto(Integer id, String username, String createdAt, String lastActiveAt, Set<String> roles, Set<String> permissions) {
+    public UserResponseDto(Integer id, String username, String createdAt, String lastActiveAt, Set<String> roles) {
         this.id = id;
         this.username = username;
         this.createdAt = createdAt;
         this.lastActiveAt = lastActiveAt;
         this.roles = roles;
-        this.permissions = permissions;
+        //this.permissions = permissions;
     }
     public Integer getId() {return id;}
     public void setId(Integer id) {this.id = id;}
@@ -55,10 +55,10 @@ public class UserResponseDto extends RepresentationModel<UserResponseDto> {
         this.roles= roles.stream().map(rol -> StringUtils.capitalize(rol)).collect(Collectors.toSet());
     }
 
-    public Set<String> getPermissions() { return permissions; }
-    public void setPermissions(Set<String> permissions) { 
-        this.permissions = permissions.stream().map(permission -> StringUtils.capitalize(permission)).collect(Collectors.toSet()); 
-    }
+    //public Set<String> getPermissions() { return permissions; }
+    //public void setPermissions(Set<String> permissions) { 
+    //    this.permissions = permissions.stream().map(permission -> StringUtils.capitalize(permission)).collect(Collectors.toSet()); 
+    //}
 
     private String formatDate(OffsetDateTime date) {
         if (date == null) return null;
