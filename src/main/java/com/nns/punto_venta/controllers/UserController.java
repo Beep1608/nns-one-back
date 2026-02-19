@@ -1,7 +1,5 @@
 package com.nns.punto_venta.controllers;
 
-import java.util.List;
-
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;

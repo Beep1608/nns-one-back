@@ -1,5 +1,6 @@
 package com.nns.punto_venta.services;
 
+import java.util.HashSet;
 import java.util.List;
 
 import org.springframework.data.domain.Page;
@@ -8,24 +9,29 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nns.punto_venta.dtos.users.UserRequestDto;
 import com.nns.punto_venta.dtos.users.UserResponseDto;
+import com.nns.punto_venta.dtos.users.UserRequestDto;
 import com.nns.punto_venta.dtos.users.UserUpdateRequestDto;
+import com.nns.punto_venta.entities.RoleEntity;
 import com.nns.punto_venta.entities.UserEntity;
 import com.nns.punto_venta.exceptions.users.UserNotFoundException;
 import com.nns.punto_venta.mappers.users.UserMapper;
+import com.nns.punto_venta.repositories.RoleRepository;
 import com.nns.punto_venta.repositories.UserRepository;
+
+import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class UserService {
-     
+
     private UserRepository userRepository;
+    private RoleRepository roleRepository;
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, UserMapper userMapper, BCryptPasswordEncoder passwordEncoder)
-    {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
     }
@@ -33,7 +39,7 @@ public class UserService {
     // Obtener todos los usuarios
     @Transactional(readOnly = true)
     public Page<UserEntity> findAll(Pageable pageable) {
-     
+
         return userRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
@@ -41,28 +47,38 @@ public class UserService {
     @Transactional(readOnly = true)
     public UserResponseDto findById(Integer id) {
         return userRepository.findById(id)
-                    .map(userMapper::toResponse)
-                    .orElseThrow(() -> new UserNotFoundException("Usuarios no encontrado con ID: " + id));
+                .map(userMapper::toResponse)
+                .orElseThrow(() -> new UserNotFoundException("Usuarios no encontrado con ID: " + id));
     }
 
     // Crear un usuario (Recibimos RequestDto y devolvemos ResponseDto)
     @Transactional
     public UserResponseDto createUser(UserRequestDto dto) {
-        // 1. Convertimos DTO a Entidad
-        UserEntity userEntity = userMapper.toEntity(dto);
-        
-        // 2. Lógica de negocio (Ej: Encriptar password antes de guardar)
-        // userEntity.setPassword(passwordEncoder.encode(dto.getPassword()));
-        String encodedPassword = passwordEncoder.encode(dto.getPassword());
-        userEntity.setPassword(encodedPassword);
-        
-        // 3. Guardamos y convertimos el resultado a respuesta
-        UserEntity savedUser = userRepository.save(userEntity);
-        return userMapper.toResponse(savedUser);
+
+  // 1. Convertimos los campos básicos
+    UserEntity userEntity = userMapper.toEntity(dto);
+
+     // 2. VALIDACIÓN: Buscamos los roles reales en la DB
+     List<RoleEntity> rolesFound = roleRepository.findAllById(dto.getRoles());
+
+     // Si el tamaño no coincide, es que algún ID no existía
+     if (rolesFound.size() != dto.getRoles().size()) {
+         throw new EntityNotFoundException("Uno o más roles no fueron encontrados");
+     }
+
+     // 3. Asignamos los roles reales (que ya traen su Name y Permissions)
+     userEntity.setRoles(new HashSet<>(rolesFound));
+
+     // 4. Password y Guardado
+     userEntity.setPassword(passwordEncoder.encode(dto.getPassword()));
+     UserEntity savedUser = userRepository.save(userEntity);
+
+     // 5. Ahora el Mapper sí encontrará los nombres y permisos
+     return userMapper.toResponse(savedUser);
     }
 
     @Transactional
-    public UserResponseDto updateUser(Integer id, UserUpdateRequestDto dto) { 
+    public UserResponseDto updateUser(Integer id, UserUpdateRequestDto dto) {
         // 1. Buscamos el usuario existente
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
