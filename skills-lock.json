@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "skills": {
+    "java-architect": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "c2df61fa74653db3443ee0562e0692d8ab7ece8b98ee078a7a7648ce9ad1343d"
+    },
+    "postgres-pro": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "ef7e44790d4c7d71f69836f281f4404b69fffed569f1a3e7561fea01303091ff"
+    },
+    "secure-code-guardian": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "ac63d2caf1c898e3f902b3eeb9d8e5b860573eec38fa8b6e12cfc53e3ea7ef6f"
+    },
+    "security-reviewer": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "62d9f91cde7dca972e2b656d89584756fb04d86ef49490bec96e7d42bb40994d"
+    },
+    "spring-boot-engineer": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "6b4f90228a643c7e75cd04181c2a7387e9b962b52fcb748f16050deae8dadf8b"
+    },
+    "sql-pro": {
+      "source": "jeffallan/claude-skills",
+      "sourceType": "github",
+      "computedHash": "4be7a1682d7ddb09bd471e5f0387597f61412e0e7e1cdc520ba343f7614d0329"
+    }
+  }
+}
