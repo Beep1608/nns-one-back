@@ -2,6 +2,7 @@ package com.nns.punto_venta.dtos.roles;
 
 import org.springframework.hateoas.RepresentationModel;
 import org.springframework.hateoas.server.core.Relation;
+import org.springframework.util.StringUtils;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
@@ -30,6 +31,8 @@ public class RoleResponseDto extends RepresentationModel<RoleResponseDto> {
         this.id = id;
     }
     public void setName(String name) {
-        this.name = name;
+        this.name = StringUtils.capitalize(name);
     }
+
+
 }
