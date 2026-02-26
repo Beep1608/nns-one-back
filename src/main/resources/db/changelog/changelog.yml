@@ -1,17 +1,30 @@
 databaseChangeLog:
   - changeSet:
       id: 1
-      author: 07022026-migration
+      author: fidel.zarco
+      runaAlways: true
+      labels: migration
+      context: default
+      comment: Creacion de tabla tenants
+      changes:
+        - sqlFile:
+            path: tenants/tenants.sql
+            relativeToChangelogFile: true
+            splitStatements: true
+  - changeSet:
+      id: 2
+      author: fidel.zarco
       runAlways: true
       labels: migration
       context: default
-      comment: Tablas de usuarios, productos y ventas
+      comment: Funcion para crear las tablas de usuarios, productos y ventas en un tenant
       changes:
         - sqlFile:
             path: migrations/migration-07-02-2026.sql
             relativeToChangelogFile: true
+            splitStatements: false
   - changeSet:
-      id: 09022026-seeder-dev
+      id: 3
       author: fidel.zarco
       runAlways: true
       labels: seeder
@@ -21,3 +34,4 @@ databaseChangeLog:
         - sqlFile:
             path: seeders/seeder-09-02-2026.sql
             relativeToChangelogFile: true
+            splitStatements: true
