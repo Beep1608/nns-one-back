@@ -1,6 +1,6 @@
 package com.nns.punto_venta.modules.security.repositories;
 
-import java.util.List;
+
 import java.util.Optional;
 
 import org.springframework.data.domain.Page;
