@@ -51,4 +51,5 @@ public class TenantService {
         tenantRepository.executeCreateTenantFunction(savedEntity.getSchemaName());
         return tenantMapper.toResponseDto(savedEntity);
     }
+
 }

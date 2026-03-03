@@ -1,6 +1,6 @@
 -- 1. insertar el tenant en la tabla maestra (especificando el esquema)
-insert into tenants.tenants (name, schema_name) 
-values ('tenant 1', 'tenant1') 
+insert into tenants.tenants (email,password,name, schema_name) 
+values ('hola@example.com','12345','tenant 1', 'tenant1') 
 on conflict do nothing;
 
 -- 2. ejecutar la función que crea todo el esquema, tablas, y los roles/permisos base
