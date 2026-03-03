@@ -16,9 +16,15 @@ public class TenantEntity {
     @GeneratedValue(strategy=GenerationType.IDENTITY)
     private Long id;
 
+    private String email;
+
+    private String password;
+
     private String name;
 
     private String schemaName;
+
+    private String businessCode;
 
     private Timestamp createdAt;
 
@@ -62,5 +68,29 @@ public class TenantEntity {
 
     public void setUpdatedAt(Timestamp updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public String getBusinessCode() {
+        return businessCode;
+    }
+
+    public void setBusinessCode(String businessCode) {
+        this.businessCode = businessCode;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 }

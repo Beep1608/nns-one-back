@@ -26,12 +26,19 @@ public class TenantController {
     }   
 
 
-    @PostMapping
+    @PostMapping("/register")
     public ResponseEntity<TenantResponseDto> createTenant(@RequestBody TenantRequestDto tenantDto) {
           
         var createdTenant = tenantService.createTenant(tenantDto);
 
         return ResponseEntity.ok(createdTenant);
     }
-    
+
+    @PostMapping("/login")
+    public ResponseEntity<String> login(){
+
+        return  ResponseEntity.ok("Hola");
+    }
+
+
 }
