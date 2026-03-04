@@ -16,6 +16,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.nns.punto_venta.modules.security.filters.JwtAuthFilter;
 import com.nns.punto_venta.modules.security.services.UserDetailsImpl;
 import com.nns.punto_venta.modules.tenant.services.TenantUserDetailImpl;
 
