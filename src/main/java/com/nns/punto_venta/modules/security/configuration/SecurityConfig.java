@@ -3,6 +3,8 @@ package com.nns.punto_venta.modules.security.configuration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Description;
+import org.springframework.context.annotation.Primary;
 import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -25,12 +27,10 @@ import com.nns.punto_venta.modules.tenant.services.TenantUserDetailImpl;
 @EnableWebSecurity
 public class SecurityConfig {
     private final UserDetailsImpl userDetailsImpl;
-    private final TenantUserDetailImpl tenantUserDetailImpl;
     private final ApplicationContext context;
-    public SecurityConfig(UserDetailsImpl userDetailsImpl, TenantUserDetailImpl tenantUserDetailImpl , ApplicationContext context)
+    public SecurityConfig(UserDetailsImpl userDetailsImpl , ApplicationContext context)
     {
         this.userDetailsImpl = userDetailsImpl;
-        this.tenantUserDetailImpl = tenantUserDetailImpl;
         this.context = context;
 
     }
@@ -43,7 +43,7 @@ public class SecurityConfig {
 
 
     @Bean 
-    public DaoAuthenticationProvider tenantAuthProvider(){
+    public DaoAuthenticationProvider tenantAuthProvider(TenantUserDetailImpl tenantUserDetailImpl){
         DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(tenantUserDetailImpl);
         authenticationProvider.setPasswordEncoder(passwordEncoder());
         return authenticationProvider;
@@ -59,8 +59,9 @@ public class SecurityConfig {
 
 
     @Bean("tenantAuthManager")
-    public AuthenticationManager tenantAuthManager() {
-        return new ProviderManager(tenantAuthProvider());
+    @Primary
+    public AuthenticationManager tenantAuthManager(TenantUserDetailImpl tenantUserDetailImpl) {
+        return new ProviderManager(tenantAuthProvider(tenantUserDetailImpl));
     }
 
     @Bean("userAuthManager")
@@ -70,14 +71,16 @@ public class SecurityConfig {
 
     @Bean
     @Order(1)
-    public SecurityFilterChain tenantLoginFilterChain(HttpSecurity http) throws Exception {
+    @Description("Chain used fo authentication of tenants")
+    public SecurityFilterChain tenantLoginFilterChain(HttpSecurity http, TenantUserDetailImpl tenantUserDetailImpl) throws Exception {
         http
-            .securityMatcher("/api/tenants/login") // SOLO aplica a esta ruta exacta
+            .securityMatcher("/api/tenants/*") 
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated())
-            .httpBasic(Customizer.withDefaults()) // Habilita Basic Auth solo aquí
-            .authenticationManager(tenantAuthManager()); // Usa el manager global de tenants
+            .authenticationManager(tenantAuthManager(tenantUserDetailImpl))
+            .httpBasic(Customizer.withDefaults())
+            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
+            
 
         return http.build();
     }
@@ -89,6 +92,8 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/api/tenants/register").permitAll() 
+                .requestMatchers(HttpMethod.POST, "/api/debug/password-encode").permitAll() 
+                .requestMatchers(HttpMethod.POST, "/api/debug/debug").permitAll() 
                 .anyRequest().authenticated()
             )
           

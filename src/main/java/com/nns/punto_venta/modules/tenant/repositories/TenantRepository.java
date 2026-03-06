@@ -12,7 +12,8 @@ import com.nns.punto_venta.modules.tenant.entities.TenantEntity;
 @Repository
 public interface  TenantRepository extends JpaRepository<TenantEntity, Long> {
     
-    Optional<TenantEntity> findByNameOrEmail (String text);
+    @Query("SELECT t FROM TenantEntity t WHERE t.name = :text OR t.email = :text")
+    Optional<TenantEntity> findByNameOrEmail (@Param("text") String text);
     
     @Query(value="SELECT create_tenant(:schemaName)", nativeQuery = true)
     void executeCreateTenantFunction(@Param("schemaName") String schemaName);

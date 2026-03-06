@@ -23,7 +23,7 @@ import lombok.NonNull;
 public class JwtAuthFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
-    // Inyecta el UserDetailsService que lee de los esquemas de los tenants
+ 
     private final TenantUserDetailImpl tenantUserDetailImpl; 
 
     public JwtAuthFilter(JwtService jwtService, TenantUserDetailImpl tenantUserDetailImpl) {

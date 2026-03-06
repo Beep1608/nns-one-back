@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nns.punto_venta.modules.tenant.dtos.TenantLoginRequestDto;
+import com.nns.punto_venta.modules.tenant.dtos.TenantLoginResponseDto;
 import com.nns.punto_venta.modules.tenant.dtos.TenantRequestDto;
 import com.nns.punto_venta.modules.tenant.dtos.TenantResponseDto;
 import com.nns.punto_venta.modules.tenant.services.TenantService;
@@ -35,9 +37,9 @@ public class TenantController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<String> login(){
+    public ResponseEntity<TenantLoginResponseDto> login(TenantLoginRequestDto loginRequestDto){
 
-        return  ResponseEntity.ok("Hola");
+        return  ResponseEntity.ok(tenantService.login(loginRequestDto));
     }
 
 
