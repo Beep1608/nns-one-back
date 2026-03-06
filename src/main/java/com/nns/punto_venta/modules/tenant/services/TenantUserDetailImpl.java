@@ -1,5 +1,8 @@
 package com.nns.punto_venta.modules.tenant.services;
 
+import java.util.List;
+
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
@@ -20,14 +23,16 @@ public class TenantUserDetailImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        System.out.println("Intentando Autenticar Tenant");
         TenantEntity entity = tenantRepository.findByNameOrEmail(username)
         .orElseThrow(() -> new TenantNotFoundException("No pudimos encontrar al administrador."));
-        
-        
+        System.out.println(entity.getEmail());
+        System.out.println(entity.getPassword());
+        System.out.println(entity.getBusinessCode());
         return new User(
             entity.getEmail(),
             entity.getPassword(),
-            null
+            List.of(new SimpleGrantedAuthority("minion"))
         );
     }
     

@@ -7,6 +7,9 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
+import com.nns.punto_venta.modules.security.services.JwtService;
+import com.nns.punto_venta.modules.tenant.dtos.TenantLoginRequestDto;
+import com.nns.punto_venta.modules.tenant.dtos.TenantLoginResponseDto;
 import com.nns.punto_venta.modules.tenant.dtos.TenantRequestDto;
 import com.nns.punto_venta.modules.tenant.dtos.TenantResponseDto;
 import com.nns.punto_venta.modules.tenant.mappers.TenantMapper;
@@ -19,9 +22,18 @@ public class TenantService {
     private final TenantMapper tenantMapper;
     private final TenantIdentifierResolver tenantIdentifierResolver;
     private final DataSource dataSource;
+    private final JwtService jwtService;
+    private final TenantUserDetailImpl tenantUserDetailImpl;
 
-    public TenantService(TenantRepository tenantRepository, TenantMapper tenantMapper, TenantIdentifierResolver tenantIdentifierResolver, DataSource dataSource) {
+    public TenantService(TenantRepository tenantRepository, 
+        JwtService jwtService,
+        TenantUserDetailImpl tenantUserDetailImpl,
+        TenantMapper tenantMapper, 
+        TenantIdentifierResolver tenantIdentifierResolver, 
+        DataSource dataSource) {
         this.tenantRepository = tenantRepository;
+        this.jwtService = jwtService;
+        this.tenantUserDetailImpl = tenantUserDetailImpl;
         this.tenantMapper = tenantMapper;
         this.tenantIdentifierResolver = tenantIdentifierResolver;
         this.dataSource = dataSource;
@@ -50,6 +62,11 @@ public class TenantService {
         var savedEntity = tenantRepository.save(entity);
         tenantRepository.executeCreateTenantFunction(savedEntity.getSchemaName());
         return tenantMapper.toResponseDto(savedEntity);
+    }
+
+    public TenantLoginResponseDto login (TenantLoginRequestDto loginRequestDto){
+       var tokn =  jwtService.generateToken(tenantUserDetailImpl.loadUserByUsername(loginRequestDto.getName()), "1");
+        return  new TenantLoginResponseDto(tokn);
     }
 
 }
