@@ -41,5 +41,14 @@ public class GlobalExceptionHandler {
 
         return new ResponseEntity<>(response, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<Map<String, String>> handleIllegalArgumentException(IllegalArgumentException ex) {
+        Map<String, String> response = new HashMap<>();
+        response.put("error", "Datos inválidos o duplicados");
+        response.put("message", ex.getMessage()); 
+    
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(response); 
+    }
 }
 

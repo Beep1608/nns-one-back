@@ -1,14 +1,11 @@
 package com.nns.punto_venta.modules.tenant.services;
 
-import java.util.List;
-
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import com.nns.punto_venta.modules.tenant.entities.CustomTenantDetail;
 import com.nns.punto_venta.modules.tenant.entities.TenantEntity;
 import com.nns.punto_venta.modules.tenant.exceptions.TenantNotFoundException;
 import com.nns.punto_venta.modules.tenant.repositories.TenantRepository;
@@ -29,11 +26,8 @@ public class TenantUserDetailImpl implements UserDetailsService {
         System.out.println(entity.getEmail());
         System.out.println(entity.getPassword());
         System.out.println(entity.getBusinessCode());
-        return new User(
-            entity.getEmail(),
-            entity.getPassword(),
-            List.of(new SimpleGrantedAuthority("minion"))
-        );
+        return new CustomTenantDetail(entity.getId(), 
+        entity.getEmail(), entity.getPassword(), entity.getSchemaName(), entity.getBusinessCode());
     }
     
 }

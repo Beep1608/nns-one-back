@@ -14,6 +14,7 @@ import com.nns.punto_venta.modules.tenant.dtos.TenantResponseDto;
 import com.nns.punto_venta.modules.tenant.services.TenantService;
 
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
+import jakarta.validation.Valid;
 
 
 
@@ -29,17 +30,15 @@ public class TenantController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<TenantResponseDto> createTenant(@RequestBody TenantRequestDto tenantDto) {
-          
-        var createdTenant = tenantService.createTenant(tenantDto);
+    public ResponseEntity<TenantResponseDto> createTenant(@Valid @RequestBody TenantRequestDto tenantDto) {
 
-        return ResponseEntity.ok(createdTenant);
+        return tenantService.createTenant(tenantDto);
     }
 
     @PostMapping("/login")
     public ResponseEntity<TenantLoginResponseDto> login(TenantLoginRequestDto loginRequestDto){
 
-        return  ResponseEntity.ok(tenantService.login(loginRequestDto));
+        return  tenantService.login(loginRequestDto);
     }
 
 

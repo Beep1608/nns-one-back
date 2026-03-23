@@ -10,13 +10,11 @@ import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.ProviderManager;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.nns.punto_venta.modules.security.filters.JwtAuthFilter;
 import com.nns.punto_venta.modules.security.services.UserDetailsImpl;
@@ -44,46 +42,46 @@ public class SecurityConfig {
 
     @Bean 
     public DaoAuthenticationProvider tenantAuthProvider(TenantUserDetailImpl tenantUserDetailImpl){
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(tenantUserDetailImpl);
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
-        return authenticationProvider;
+       DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(tenantUserDetailImpl);
+       authenticationProvider.setPasswordEncoder(passwordEncoder());
+       return authenticationProvider;
     }
 
     @Bean
 
     public DaoAuthenticationProvider usersAuthenticationProvider(){
-        DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsImpl);
-        authenticationProvider.setPasswordEncoder(passwordEncoder());
-        return authenticationProvider;
+       DaoAuthenticationProvider authenticationProvider = new DaoAuthenticationProvider(userDetailsImpl);
+       authenticationProvider.setPasswordEncoder(passwordEncoder());
+       return authenticationProvider;
     }
 
 
     @Bean("tenantAuthManager")
     @Primary
     public AuthenticationManager tenantAuthManager(TenantUserDetailImpl tenantUserDetailImpl) {
-        return new ProviderManager(tenantAuthProvider(tenantUserDetailImpl));
+       return new ProviderManager(tenantAuthProvider(tenantUserDetailImpl));
     }
 
     @Bean("userAuthManager")
     public AuthenticationManager userAuthManager() {
-        return new ProviderManager(usersAuthenticationProvider());
+       return new ProviderManager(usersAuthenticationProvider());
     }
 
-    @Bean
-    @Order(1)
-    @Description("Chain used fo authentication of tenants")
-    public SecurityFilterChain tenantLoginFilterChain(HttpSecurity http, TenantUserDetailImpl tenantUserDetailImpl) throws Exception {
-        http
-            .securityMatcher("/api/tenants/*") 
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .authenticationManager(tenantAuthManager(tenantUserDetailImpl))
-            .httpBasic(Customizer.withDefaults())
-            .authorizeHttpRequests(auth -> auth.anyRequest().authenticated());
-            
-
-        return http.build();
-    }
+     @Bean
+     @Order(1)
+     @Description("Chain used fo authentication of tenants")
+     public SecurityFilterChain tenantLoginFilterChain(HttpSecurity http, TenantUserDetailImpl tenantUserDetailImpl) throws Exception {
+         http
+             .securityMatcher("/api/tenants/login") 
+             .csrf(csrf -> csrf.disable())
+             //.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+             //.authenticationManager(tenantAuthManager(tenantUserDetailImpl))
+             //.httpBasic(Customizer.withDefaults())
+             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll());
+             
+    
+         return http.build();
+     }
     @Bean
     @Order(2)
     public SecurityFilterChain jwtResourcesFilterChain(HttpSecurity http, JwtAuthFilter jwtAuthFilter) throws Exception {
@@ -97,8 +95,8 @@ public class SecurityConfig {
                 .anyRequest().authenticated()
             )
           
-            .httpBasic(basic -> basic.disable()) 
-            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .httpBasic(basic -> basic.disable()) ;
+           // .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
