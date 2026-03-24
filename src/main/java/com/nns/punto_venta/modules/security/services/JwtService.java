@@ -2,12 +2,15 @@ package com.nns.punto_venta.modules.security.services;
 
 import java.util.Date;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import javax.crypto.SecretKey;
 
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
@@ -34,21 +37,32 @@ public class JwtService {
         return extractClaim(token, Claims::getSubject);
     }
 
-    public String extractTenantId(String token) {
-
-        return extractClaim(token, claims -> claims.get("tenantId", String.class));
-    }
 
     public <T> T extractClaim(String token, Function<Claims, T> claimsResolver) {
         final Claims claims = extractAllClaims(token);
         return claimsResolver.apply(claims);
     }
+    // 2. NUEVO: método genérico simplificado para extraer por llave y tipo de clase
+    public <T> T extractClaim(String token, String claimKey, Class<T> claimType) {
+        final Claims claims = extractAllClaims(token);
+        return claims.get(claimKey, claimType);
+    }
+
+    // 3. extracción del tenant_id. 
+    // como en tu base de datos el id es BIGINT, en java debe ser Long, no String ni Integer.
+    public Long extractTenantId(String token) {
+        return extractClaim(token, "tenantId", Long.class);
+    }
 
 
-    public String generateToken(CustomTenantDetail tenantDetail) {
+    public String generateTokenTenant(CustomTenantDetail tenantDetail) {
         Map<String, Object> extraClaims = new HashMap<>();
         extraClaims.put("tenantId", tenantDetail.getId()); 
+        List<String> authorities = tenantDetail.getAuthorities().stream()
+        .map(GrantedAuthority::getAuthority)
+        .collect(Collectors.toList());
         
+        extraClaims.put("authorities", authorities);
         return buildToken(extraClaims, tenantDetail.getUsername(), jwtExpiration);
     }
 

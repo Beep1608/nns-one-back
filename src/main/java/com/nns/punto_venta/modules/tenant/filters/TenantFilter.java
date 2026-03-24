@@ -21,7 +21,7 @@ public class TenantFilter extends OncePerRequestFilter {
         
                 String tenantId = request.getHeader("X-Tenant-ID");
                 if(tenantId !=null){
-                    TenantContext.setCurrentTenant(tenantId);
+                    TenantContext.setCurrentTenant(Long.parseLong(tenantId));
                 }
 
                 try{

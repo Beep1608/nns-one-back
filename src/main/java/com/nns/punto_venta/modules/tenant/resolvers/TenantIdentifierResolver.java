@@ -7,19 +7,20 @@ import org.hibernate.context.spi.CurrentTenantIdentifierResolver;
 import org.springframework.boot.hibernate.autoconfigure.HibernatePropertiesCustomizer;
 import org.springframework.stereotype.Component;
 
+import com.nns.punto_venta.modules.tenant.context.TenantContext;
+
 @Component
 public class TenantIdentifierResolver 
 implements CurrentTenantIdentifierResolver<String>, HibernatePropertiesCustomizer {
 
-   private static final ThreadLocal<String> currentTenant = ThreadLocal.withInitial(() -> "public");
-
     public void setCurrentTenant(String currentTenant){
-        TenantIdentifierResolver.currentTenant.set(currentTenant);
+        TenantContext.setCurrentSchema(currentTenant);
     }
 
     @Override
     public String resolveCurrentTenantIdentifier() {
-       return currentTenant.get();
+       String schema = TenantContext.getCurrentSchema();
+       return schema != null ? schema : "public";
     }
 
     @Override
@@ -32,7 +33,7 @@ implements CurrentTenantIdentifierResolver<String>, HibernatePropertiesCustomize
         hibernateProperties.put(AvailableSettings.MULTI_TENANT_IDENTIFIER_RESOLVER, this);
     }
     public void clear() {
-        currentTenant.remove();
+        TenantContext.clear();
     }
     
 }

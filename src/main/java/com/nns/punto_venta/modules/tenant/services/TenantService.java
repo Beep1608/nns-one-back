@@ -108,7 +108,7 @@ public class TenantService {
        );
 
        CustomTenantDetail userDetails  = (CustomTenantDetail) auth.getPrincipal();
-       String token = jwtService.generateToken(userDetails);
+       String token = jwtService.generateTokenTenant(userDetails);
 
        System.out.println("Token : "+ token);
        TenantLoginResponseDto loginResponseDto = new TenantLoginResponseDto();

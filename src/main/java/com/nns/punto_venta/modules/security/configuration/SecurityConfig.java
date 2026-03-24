@@ -15,6 +15,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.nns.punto_venta.modules.security.filters.JwtAuthFilter;
 import com.nns.punto_venta.modules.security.services.UserDetailsImpl;
@@ -94,9 +95,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/debug/debug").permitAll() 
                 .anyRequest().authenticated()
             )
-          
-            .httpBasic(basic -> basic.disable()) ;
-           // .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }

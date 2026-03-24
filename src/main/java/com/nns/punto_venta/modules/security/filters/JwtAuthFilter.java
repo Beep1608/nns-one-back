@@ -11,6 +11,7 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import com.nns.punto_venta.modules.security.services.JwtService;
 import com.nns.punto_venta.modules.tenant.context.TenantContext;
+import com.nns.punto_venta.modules.tenant.entities.CustomTenantDetail;
 import com.nns.punto_venta.modules.tenant.services.TenantUserDetailImpl;
 
 import jakarta.servlet.FilterChain;
@@ -39,6 +40,7 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String authHeader = request.getHeader("Authorization");
 
+        System.out.println("TOKEN");
         // 1. Validar que el header exista y tenga el formato correcto
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             filterChain.doFilter(request, response);
@@ -47,10 +49,14 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 
         final String jwt = authHeader.substring(7);
         
+        System.out.println(jwt);
         try {
+            System.out.println("TOKEN 2");
             // 2. Extraer claims (Aquí asumimos que tu JwtService lanza excepciones si expira/es inválido)
             final String username = jwtService.extractUsername(jwt);
-            final String tenantId = jwtService.extractTenantId(jwt); // claim personalizado
+              System.out.println(username);
+            final Long tenantId = jwtService.extractTenantId(jwt); // claim personalizado
+            System.out.println(tenantId);
 
             // 3. Validar que no estemos ya autenticados en este hilo
             if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
@@ -61,20 +67,29 @@ public class JwtAuthFilter extends OncePerRequestFilter {
                 // Esto garantiza que Hibernate sepa a qué esquema ir en la siguiente línea.
                 TenantContext.setCurrentTenant(tenantId);
 
-                // 5. Cargar detalles del usuario (opcional si haces el token 100% stateless, ver notas abajo)
-                UserDetails userDetails = this.tenantUserDetailImpl.loadUserByUsername(username);
 
+                // 5. Cargar detalles del usuario (opcional si haces el token 100% stateless, ver notas abajo)
+                CustomTenantDetail userDetails = (CustomTenantDetail) this.tenantUserDetailImpl.loadUserByUsername(username);
+
+                // --- NUEVO: Establecer el esquema del tenant ---
+                TenantContext.setCurrentSchema(userDetails.getSchemaName());
+
+                System.out.println("Paso 1");
+                System.out.println(userDetails.getUsername());
                 // 6. Validar token contra los detalles (fecha expiración, coincidencia de usuario)
                 if (jwtService.isTokenValid(jwt, userDetails)) {
+                     System.out.println("Paso 2");
                     UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
                             userDetails,
                             null,
                             userDetails.getAuthorities()
                     );
+                     System.out.println("Paso 3");
                     authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    
+                     System.out.println("Paso 4");
                     // 7. Establecer el usuario en Spring Security
                     SecurityContextHolder.getContext().setAuthentication(authToken);
+                     System.out.println("Paso 5");
                 }
             }
             
