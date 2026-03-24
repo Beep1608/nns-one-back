@@ -49,9 +49,19 @@ public class JwtService {
     }
 
     // 3. extracción del tenant_id. 
-    // como en tu base de datos el id es BIGINT, en java debe ser Long, no String ni Integer.
+    // como en tu base de datos el id es BIGINT, en java debe ser Long.
+    // JJWT a veces parsea números como Integer, por lo que usamos Number para ser seguros.
     public Long extractTenantId(String token) {
-        return extractClaim(token, "tenantId", Long.class);
+        Object tenantId = extractClaim(token, "tenantId", Object.class);
+        if (tenantId == null) return null;
+        if (tenantId instanceof Number) {
+            return ((Number) tenantId).longValue();
+        }
+        try {
+            return Long.valueOf(tenantId.toString());
+        } catch (NumberFormatException e) {
+            return null;
+        }
     }
 
 

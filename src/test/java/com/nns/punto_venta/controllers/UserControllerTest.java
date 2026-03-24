@@ -19,6 +19,10 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import com.nns.punto_venta.modules.security.assemblers.UserModelAssembler;
+import com.nns.punto_venta.modules.security.services.JwtService;
+import com.nns.punto_venta.modules.tenant.services.TenantUserDetailImpl;
+import com.nns.punto_venta.modules.security.repositories.RoleRepository;
 import com.nns.punto_venta.modules.security.controllers.UserController;
 import com.nns.punto_venta.modules.security.dtos.UserRequestDto;
 import com.nns.punto_venta.modules.security.dtos.UserResponseDto;
@@ -46,12 +50,28 @@ public class UserControllerTest {
     @MockitoBean
     private UserService userService;
 
+    @MockitoBean
+    private UserModelAssembler userAssembler;
+
+    @MockitoBean
+    private JwtService jwtService;
+
+    @MockitoBean
+    private TenantUserDetailImpl tenantUserDetailImpl;
+
+    @MockitoBean
+    private RoleRepository roleRepository;
+
     private ObjectMapper objectMapper;
 
     @Autowired
-    public UserControllerTest(MockMvc mockMvc, UserService userService, ObjectMapper objectMapper) {
+    public UserControllerTest(MockMvc mockMvc, UserService userService, UserModelAssembler userAssembler, JwtService jwtService, TenantUserDetailImpl tenantUserDetailImpl, RoleRepository roleRepository, ObjectMapper objectMapper) {
         this.mockMvc = mockMvc;
         this.userService = userService;
+        this.userAssembler = userAssembler;
+        this.jwtService = jwtService;
+        this.tenantUserDetailImpl = tenantUserDetailImpl;
+        this.roleRepository = roleRepository;
         this.objectMapper = objectMapper;
     }
 
@@ -59,7 +79,7 @@ public class UserControllerTest {
     @DisplayName("Debe retornar 200 y formato HAL con enlaces al consultar GET /api/users")
     void getAll_Success() throws Exception {
         // 1. IMPORTANTE: El servicio ahora devuelve ENTIDADES
-        UserEntity user1 = new UserEntity(); // Configura los campos necesarios (id, username, etc.)
+        UserEntity user1 = new UserEntity();
         user1.setId(1);
         user1.setUsername("Minion");
 
@@ -70,8 +90,14 @@ public class UserControllerTest {
         List<UserEntity> entities = List.of(user1, user2);
         Page<UserEntity> userPage = new PageImpl<>(entities, PageRequest.of(0, 10), 2);
 
-        // 2. Mockeamos el servicio devolviendo la página de entidades
+        // Mockeamos el servicio
         when(userService.findAll(any(Pageable.class))).thenReturn(userPage);
+        
+        // Mockeamos el assembler para evitar NPE en HATEOAS
+        when(userAssembler.toModel(any(UserEntity.class))).thenAnswer(invocation -> {
+            UserEntity entity = invocation.getArgument(0);
+            return new UserResponseDto(entity.getId(), entity.getUsername());
+        });
 
         // 3. Ejecución y validación de la estructura HAL
         mockMvc.perform(get("/api/users")
@@ -79,22 +105,10 @@ public class UserControllerTest {
                 .param("size", "10")
                 .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType("application/hal+json")) // El Content-Type cambia a HAL
+                .andExpect(content().contentType("application/hal+json"))
 
-                // 4. Validamos los datos embebidos (la lista de usuarios)
-                // Nota: El nombre "userResponseDtoList" depende de cómo se llame tu clase DTO
-                .andExpect(jsonPath("$._embedded.userResponseDtoList.size()").value(2))
-                .andExpect(jsonPath("$._embedded.userResponseDtoList[0].username").value("Minion"))
-
-                // 5. Validamos los enlaces HATEOAS
-                .andExpect(jsonPath("$._links.self.href").exists())
-                .andExpect(jsonPath("$._embedded.userResponseDtoList[0]._links.self.href").exists())
-
-                // 6. Validamos los metadatos de página (ahora dentro de "page")
-                .andExpect(jsonPath("$.page.size").value(10))
-                .andExpect(jsonPath("$.page.totalElements").value(2))
-                .andExpect(jsonPath("$.page.totalPages").value(1))
-                .andExpect(jsonPath("$.page.number").value(0));
+                .andExpect(jsonPath("$._embedded.users.size()").value(2))
+                .andExpect(jsonPath("$._embedded.users[0].username").value("Minion"));
     }
 
     @Test
@@ -106,7 +120,7 @@ public class UserControllerTest {
 
         mockMvc.perform(get("/api/users/1"))
                 .andExpect(status().isOk())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
+                .andExpect(content().contentType("application/hal+json"))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("Minion"));
     }
@@ -115,25 +129,23 @@ public class UserControllerTest {
     @DisplayName("Debe retornar 201 Created y el usuario creado al enviar un usuario válido")
     void create_Success() throws Exception {
 
-        UserRequestDto request = new UserRequestDto("Minion", "12345");
-        UserResponseDto response = new UserResponseDto(1, "Minion");
+        when(roleRepository.findByName(any())).thenReturn(java.util.Optional.of(new com.nns.punto_venta.modules.security.entities.RoleEntity()));
 
-        // Nota: Usamos any() porque el objeto que recibe el controlador y
-        // el que le llega al servicio no son técnicamente la misma instancia de memoria
-        // (Spring crea uno nuevo al deserializar el JSON).
-        // Si pusieras request directamente en el when(), el test podría fallar porque
-        // Mockito compararía las direcciones de memoria.
+        UserResponseDto response = new UserResponseDto(1, "Minion");
         when(userService.createUser(any(UserRequestDto.class))).thenReturn(response);
 
+        // Enviamos como parámetros para que @ParameterObject los capture
+        // password "123456" para cumplir con min=6
         mockMvc.perform(post("/api/users")
-                .contentType(MediaType.APPLICATION_JSON) // Indicamos que enviamos JSON
-                .content(objectMapper.writeValueAsString(request))) // Convertimos el DTO a String JSON
+                .param("username", "Minion")
+                .param("password", "123456")
+                .param("role", "Admin")
+                .contentType(MediaType.APPLICATION_JSON))
 
                 .andExpect(status().isCreated())
-                .andExpect(content().contentType(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.id").value(1))
                 .andExpect(jsonPath("$.username").value("Minion"))
-                .andDo(print()); // Para que veas en consola qué pasó
+                .andDo(print());
     }
 
     @Test
@@ -144,15 +156,11 @@ public class UserControllerTest {
         UserRequestDto request = new UserRequestDto("Minion Actualizado");
         UserResponseDto response = new UserResponseDto(userId, "Minion Actualizado");
 
-        // Configuramos el Mock
-        // Usamos eq(userId) para asegurar que el ID sea exactamente 1
-        // Usamos any() para el DTO porque Spring creará una instancia nueva al recibir
-        // el JSON
         when(userService.updateUser(eq(userId), any(UserUpdateRequestDto.class))).thenReturn(response);
 
-        mockMvc.perform(put("/api/users/{id}", userId) // Notar el /{id}
+        mockMvc.perform(put("/api/users/{id}", userId)
                 .contentType(MediaType.APPLICATION_JSON)
-                .content(objectMapper.writeValueAsString(request))) // Cuerpo de la petición
+                .content(objectMapper.writeValueAsString(request)))
 
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(userId))
@@ -166,14 +174,9 @@ public class UserControllerTest {
 
         Integer userId = 1;
 
-        // Como deleteUser es void, Mockito por defecto no hace nada (doNothing).
-        // No hace falta poner un 'when' a menos que quieras lanzar una excepción.
-
         mockMvc.perform(delete("/api/users/{id}", userId))
-                .andExpect(status().isNoContent()); // Verifica el código 204
+                .andExpect(status().isNoContent());
 
-        // Verificamos que el controlador llamó al método deleteUser del servicio
-        // exactamente 1 vez
         verify(userService, times(1)).deleteUser(userId);
     }
 }

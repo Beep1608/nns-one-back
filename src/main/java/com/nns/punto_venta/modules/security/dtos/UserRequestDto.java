@@ -6,8 +6,6 @@ import com.nns.punto_venta.modules.security.validators.RolesExist;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
-import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 
 public class UserRequestDto {
@@ -20,11 +18,11 @@ public class UserRequestDto {
     @Size(min = 6, max = 100, message = "La contraseña debe tener entre 6 y 100 caracteres")
     private String password;
 
-    @NotEmpty(message = "La lista de roles no puede estar vacía")
-    @RolesExist // Validación personalizada para la base de datos
-    private List<@NotNull(message = "El ID del rol no puede ser nulo") 
-             @Positive(message = "El ID del rol debe ser un número positivo") 
-             Long> roles;
+    @NotBlank(message = "El rol no puede estar vacío")
+    @RolesExist // Validación personalizada para la base de datos y catálogo
+    private String role;
+
+    private List<Long> storeIds;
 
     public UserRequestDto(){}
     public UserRequestDto(String username, String password){this.username=username; this.password=password;}
@@ -36,8 +34,12 @@ public class UserRequestDto {
     public String getPassword() {return password;}
     public void setPassword(String password) {this.password = password;}
 
-    public List<Long> getRoles() {return roles;}
+    public String getRole() {return role;}
 
-    public void setRoles(List<Long> roles) {this.roles = roles;}
+    public void setRole(String role) {this.role = role;}
+
+    public List<Long> getStoreIds() { return storeIds; }
+
+    public void setStoreIds(List<Long> storeIds) { this.storeIds = storeIds; }
 }
 

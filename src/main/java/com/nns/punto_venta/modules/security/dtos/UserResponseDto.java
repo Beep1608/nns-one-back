@@ -13,7 +13,7 @@ import org.springframework.util.StringUtils;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @Relation(collectionRelation = "users", itemRelation = "user")
-@JsonPropertyOrder({ "id", "username", "roles", "permissions", "createdAt", "lastActiveAt", "_links" })
+@JsonPropertyOrder({ "id", "username", "roles", "permissions", "stores", "createdAt", "lastActiveAt", "_links" })
 public class UserResponseDto extends RepresentationModel<UserResponseDto> {
     private Integer id;
     private String username;
@@ -21,7 +21,8 @@ public class UserResponseDto extends RepresentationModel<UserResponseDto> {
     private String lastActiveAt;
 
     private Set<String> roles;
-    //private Set<String> permissions;
+    private Set<String> storeNames;
+    private List<Long> storeIds;
 
 
     public UserResponseDto(){}
@@ -32,7 +33,6 @@ public class UserResponseDto extends RepresentationModel<UserResponseDto> {
         this.createdAt = createdAt;
         this.lastActiveAt = lastActiveAt;
         this.roles = roles;
-        //this.permissions = permissions;
     }
     public Integer getId() {return id;}
     public void setId(Integer id) {this.id = id;}
@@ -54,6 +54,12 @@ public class UserResponseDto extends RepresentationModel<UserResponseDto> {
     public void setRoles(Set<String> roles) { 
         this.roles= roles.stream().map(rol -> StringUtils.capitalize(rol)).collect(Collectors.toSet());
     }
+
+    public Set<String> getStoreNames() { return storeNames; }
+    public void setStoreNames(Set<String> storeNames) { this.storeNames = storeNames; }
+
+    public List<Long> getStoreIds() { return storeIds; }
+    public void setStoreIds(List<Long> storeIds) { this.storeIds = storeIds; }
 
     //public Set<String> getPermissions() { return permissions; }
     //public void setPermissions(Set<String> permissions) { 

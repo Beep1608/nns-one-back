@@ -13,6 +13,10 @@ public interface  RoleRepository extends JpaRepository<RoleEntity, Long> {
     Optional<RoleEntity> findByName(String name);
 
     long countByIdIn(List<Long> ids);
+
+    List<RoleEntity> findAllByNameIn(List<String> names);
+
+    long countByNameIn(List<String> names);
     
 }
 

@@ -10,6 +10,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import com.nns.punto_venta.modules.products.entities.ProductEntity;
 import com.nns.punto_venta.modules.sales.entities.SaleEntity;
+import com.nns.punto_venta.modules.stores.entities.StoreEntity;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -24,8 +25,11 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 
+import org.hibernate.annotations.SQLRestriction;
+
 @Entity
 @Table(name = "users")
+@SQLRestriction("deleted_at IS NULL")
 public class UserEntity {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,6 +66,14 @@ public class UserEntity {
     @JoinTable(name = "user_roles", // Nombre de la tabla intermedia en SQL
             joinColumns = @JoinColumn(name = "user_id"), inverseJoinColumns = @JoinColumn(name = "role_id"))
     private Set<RoleEntity> roles = new HashSet<>();
+
+    // Relación con Sucursales
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(name = "user_stores",
+            joinColumns = @JoinColumn(name = "user_id"),
+            inverseJoinColumns = @JoinColumn(name = "store_id"))
+    private Set<StoreEntity> stores = new HashSet<>();
+
     // --- Getters y Setters ---
 
     public void setId(Integer id) {
@@ -142,5 +154,13 @@ public class UserEntity {
 
     public void setRoles(Set<RoleEntity> roles) {
         this.roles = roles;
+    }
+
+    public Set<StoreEntity> getStores() {
+        return stores;
+    }
+
+    public void setStores(Set<StoreEntity> stores) {
+        this.stores = stores;
     }
 }

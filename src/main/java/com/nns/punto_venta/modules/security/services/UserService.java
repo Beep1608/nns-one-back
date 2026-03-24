@@ -2,9 +2,15 @@ package com.nns.punto_venta.modules.security.services;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,20 +24,24 @@ import com.nns.punto_venta.modules.security.exceptions.UserNotFoundException;
 import com.nns.punto_venta.modules.security.mappers.UserMapper;
 import com.nns.punto_venta.modules.security.repositories.RoleRepository;
 import com.nns.punto_venta.modules.security.repositories.UserRepository;
+import com.nns.punto_venta.modules.stores.entities.StoreEntity;
+import com.nns.punto_venta.modules.stores.repositories.StoreRepository;
 
 import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class UserService {
 
-    private UserRepository userRepository;
-    private RoleRepository roleRepository;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final StoreRepository storeRepository;
     private final UserMapper userMapper;
     private final BCryptPasswordEncoder passwordEncoder;
 
-    public UserService(UserRepository userRepository, RoleRepository roleRepository, UserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
+    public UserService(UserRepository userRepository, RoleRepository roleRepository, StoreRepository storeRepository, UserMapper userMapper, BCryptPasswordEncoder passwordEncoder) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
+        this.storeRepository = storeRepository;
         this.userMapper = userMapper;
         this.passwordEncoder = passwordEncoder;
     }
@@ -39,78 +49,112 @@ public class UserService {
     // Obtener todos los usuarios
     @Transactional(readOnly = true)
     public Page<UserEntity> findAll(Pageable pageable) {
-
+        validateOwnerRole();
         return userRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
     // Buscar un usuario por ID
     @Transactional(readOnly = true)
     public UserResponseDto findById(Integer id) {
+        validateOwnerRole();
         return userRepository.findById(id)
                 .map(userMapper::toResponse)
-                .orElseThrow(() -> new UserNotFoundException("Usuarios no encontrado con ID: " + id));
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
     }
 
-    // Crear un usuario (Recibimos RequestDto y devolvemos ResponseDto)
+    // Crear un usuario
     @Transactional
     public UserResponseDto createUser(UserRequestDto dto) {
+        validateOwnerRole();
 
-  // 1. Convertimos los campos básicos
-    UserEntity userEntity = userMapper.toEntity(dto);
+        // 1. Convertimos los campos básicos
+        UserEntity userEntity = userMapper.toEntity(dto);
 
-     // 2. VALIDACIÓN: Buscamos los roles reales en la DB
-     List<RoleEntity> rolesFound = roleRepository.findAllById(dto.getRoles());
+        // 2. Asignar Rol (Único: Admin o User)
+        String roleName = dto.getRole().toLowerCase();
+        if (!roleName.equals("admin") && !roleName.equals("user")) {
+            throw new IllegalArgumentException("El rol debe ser 'admin' o 'user'");
+        }
 
-     // Si el tamaño no coincide, es que algún ID no existía
-     if (rolesFound.size() != dto.getRoles().size()) {
-         throw new EntityNotFoundException("Uno o más roles no fueron encontrados");
-     }
+        RoleEntity roleFound = roleRepository.findByName(roleName)
+                .orElseThrow(() -> new EntityNotFoundException("El rol '" + roleName + "' no fue encontrado"));
+        userEntity.setRoles(new HashSet<>(List.of(roleFound)));
 
-     // 3. Asignamos los roles reales (que ya traen su Name y Permissions)
-     userEntity.setRoles(new HashSet<>(rolesFound));
+        // 3. Asignar Sucursales
+        assignStores(userEntity, roleName, dto.getStoreIds());
 
-     // 4. Password y Guardado
-     userEntity.setPassword(passwordEncoder.encode(dto.getPassword()));
-     UserEntity savedUser = userRepository.save(userEntity);
+        // 4. Password y Guardado
+        userEntity.setPassword(passwordEncoder.encode(dto.getPassword()));
+        UserEntity savedUser = userRepository.save(userEntity);
 
-     // 5. Ahora el Mapper sí encontrará los nombres y permisos
-     return userMapper.toResponse(savedUser);
+        return userMapper.toResponse(savedUser);
     }
 
     @Transactional
     public UserResponseDto updateUser(Integer id, UserUpdateRequestDto dto) {
-        // 1. Buscamos el usuario existente
+        validateOwnerRole();
+        
         UserEntity user = userRepository.findById(id)
                 .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
 
-        // 2. Actualizamos los campos básicos
         user.setUsername(dto.getUsername());
 
-        // 3. Lógica de contraseña: Solo actualizamos y encriptamos si el DTO trae una
         if (dto.getPassword() != null && !dto.getPassword().isBlank()) {
             user.setPassword(passwordEncoder.encode(dto.getPassword()));
         }
 
-        // 4. Guardamos y mapeamos a respuesta
+        // Si se implementa actualización de rol/sucursales en el DTO de update:
+        // String roleName = user.getRoles().iterator().next().getName().toLowerCase();
+        // assignStores(user, roleName, dto.getStoreIds());
+
         UserEntity updatedUser = userRepository.save(user);
         return userMapper.toResponse(updatedUser);
     }
 
-    // Eliminar un usuario
+    // Eliminar un usuario (Soft Delete)
     @Transactional
     public void deleteUser(Integer id) {
-        if (!userRepository.existsById(id)) {
-            throw new UserNotFoundException("Usuario no encontrado con ID: " + id);
-        }
-        userRepository.deleteById(id);
+        validateOwnerRole();
+        UserEntity user = userRepository.findById(id)
+                .orElseThrow(() -> new UserNotFoundException("Usuario no encontrado con ID: " + id));
+        
+        user.setDeletedAt(java.time.OffsetDateTime.now());
+        userRepository.save(user);
     }
 
-    // Búsqueda personalizada
-    @Transactional(readOnly = true)
-    public UserResponseDto findByUsername(String username) {
-        return userRepository.findByUsername(username)
-                .map(userMapper::toResponse)
-                .orElseThrow(() -> new RuntimeException("Username no encontrado: " + username));
+    private void assignStores(UserEntity user, String roleName, List<Long> storeIds) {
+        if (storeIds == null || storeIds.isEmpty()) {
+            if (roleName.equals("user")) {
+                throw new IllegalArgumentException("Un usuario con rol 'user' debe estar asignado a exactamente una sucursal.");
+            }
+            user.setStores(new HashSet<>());
+            return;
+        }
+
+        if (roleName.equals("user") && storeIds.size() != 1) {
+            throw new IllegalArgumentException("Un usuario con rol 'user' solo puede estar asignado a una sucursal.");
+        }
+
+        Set<StoreEntity> stores = storeIds.stream()
+                .map(sid -> storeRepository.findById(sid)
+                        .orElseThrow(() -> new EntityNotFoundException("Sucursal no encontrada con ID: " + sid)))
+                .collect(Collectors.toSet());
+        
+        user.setStores(stores);
     }
-}
+
+    private void validateOwnerRole() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !authentication.isAuthenticated()) {
+            throw new InsufficientAuthenticationException("Usuario no autenticado");
+        }
+
+        boolean isOwner = authentication.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equalsIgnoreCase("OWNER") 
+                            || a.getAuthority().equalsIgnoreCase("Minion"));
+
+        if (!isOwner) {
+            throw new AccessDeniedException("Acceso denegado: Se requiere rol de OWNER para gestionar empleados.");
+        }
+    }
 

@@ -22,16 +22,49 @@ import com.nns.punto_venta.modules.security.services.UserDetailsImpl;
 import com.nns.punto_venta.modules.tenant.services.TenantUserDetailImpl;
 
 
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.HashMap;
+import java.util.Map;
+import jakarta.servlet.http.HttpServletResponse;
+
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
     private final UserDetailsImpl userDetailsImpl;
     private final ApplicationContext context;
+    private final ObjectMapper objectMapper = new ObjectMapper();
+
     public SecurityConfig(UserDetailsImpl userDetailsImpl , ApplicationContext context)
     {
         this.userDetailsImpl = userDetailsImpl;
         this.context = context;
 
+    }
+
+    @Bean
+    public AuthenticationEntryPoint authenticationEntryPoint() {
+        return (request, response, authException) -> {
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            Map<String, Object> data = new HashMap<>();
+            data.put("message", "Usuario no autenticado o sesión expirada.");
+            data.put("error", authException.getMessage());
+            response.getOutputStream().println(objectMapper.writeValueAsString(data));
+        };
+    }
+
+    @Bean
+    public AccessDeniedHandler accessDeniedHandler() {
+        return (request, response, accessDeniedException) -> {
+            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
+            response.setContentType("application/json");
+            Map<String, Object> data = new HashMap<>();
+            data.put("message", "Acceso denegado: No tiene los permisos necesarios.");
+            data.put("error", accessDeniedException.getMessage());
+            response.getOutputStream().println(objectMapper.writeValueAsString(data));
+        };
     }
 
     @Bean
@@ -93,7 +126,12 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/api/tenants/register").permitAll() 
                 .requestMatchers(HttpMethod.POST, "/api/debug/password-encode").permitAll() 
                 .requestMatchers(HttpMethod.POST, "/api/debug/debug").permitAll() 
+                .requestMatchers("/error").permitAll()
                 .anyRequest().authenticated()
+            )
+            .exceptionHandling(exceptions -> exceptions
+                .authenticationEntryPoint(authenticationEntryPoint())
+                .accessDeniedHandler(accessDeniedHandler())
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

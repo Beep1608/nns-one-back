@@ -16,7 +16,7 @@ import jakarta.validation.Payload;
 @Target({ ElementType.FIELD, ElementType.PARAMETER })
 @Retention(RetentionPolicy.RUNTIME)
 public @interface RolesExist {
-    String message() default "Uno o más IDs de roles no existen en la base de datos";
+    String message() default "El rol especificado no existe o no es permitido";
     Class<?>[] groups() default {};
     Class<? extends  Payload>[] payload() default {};
 }
