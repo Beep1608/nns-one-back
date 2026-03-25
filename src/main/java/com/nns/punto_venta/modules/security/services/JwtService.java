@@ -15,6 +15,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 
 import com.nns.punto_venta.modules.tenant.entities.CustomTenantDetail;
+import com.nns.punto_venta.modules.security.entities.CustomUserDetails;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -74,6 +75,21 @@ public class JwtService {
         
         extraClaims.put("authorities", authorities);
         return buildToken(extraClaims, tenantDetail.getUsername(), jwtExpiration);
+    }
+
+    public String generateTokenEmployee(CustomUserDetails userDetails) {
+        Map<String, Object> extraClaims = new HashMap<>();
+        extraClaims.put("userId", userDetails.getId());
+        extraClaims.put("schemaName", userDetails.getSchemaName());
+        extraClaims.put("businessCode", userDetails.getBusinessCode());
+        
+        List<String> authorities = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+        
+        extraClaims.put("authorities", authorities);
+        
+        return buildToken(extraClaims, userDetails.getUsername(), jwtExpiration);
     }
 
     private String buildToken(Map<String, Object> extraClaims, String username, long expiration) {

@@ -124,6 +124,7 @@ public class SecurityConfig {
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers(HttpMethod.POST, "/api/tenants/register").permitAll() 
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/employee/login").permitAll() 
                 .requestMatchers(HttpMethod.POST, "/api/debug/password-encode").permitAll() 
                 .requestMatchers(HttpMethod.POST, "/api/debug/debug").permitAll() 
                 .requestMatchers("/error").permitAll()

@@ -15,8 +15,8 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.nns.punto_venta.modules.security.dtos.UserResponseDto;
 import com.nns.punto_venta.modules.security.dtos.UserRequestDto;
+import com.nns.punto_venta.modules.security.dtos.UserResponseDto;
 import com.nns.punto_venta.modules.security.dtos.UserUpdateRequestDto;
 import com.nns.punto_venta.modules.security.entities.RoleEntity;
 import com.nns.punto_venta.modules.security.entities.UserEntity;
@@ -25,6 +25,7 @@ import com.nns.punto_venta.modules.security.mappers.UserMapper;
 import com.nns.punto_venta.modules.security.repositories.RoleRepository;
 import com.nns.punto_venta.modules.security.repositories.UserRepository;
 import com.nns.punto_venta.modules.stores.entities.StoreEntity;
+import com.nns.punto_venta.modules.stores.exceptions.StoreNotFoundException;
 import com.nns.punto_venta.modules.stores.repositories.StoreRepository;
 
 import jakarta.persistence.EntityNotFoundException;
@@ -131,16 +132,29 @@ public class UserService {
             return;
         }
 
-        if (roleName.equals("user") && storeIds.size() != 1) {
+        // Eliminar duplicados y validar unicidad
+        Set<Long> uniqueIds = new HashSet<>(storeIds);
+        if (uniqueIds.size() != storeIds.size()) {
+            throw new IllegalArgumentException("La lista de sucursales contiene IDs duplicados.");
+        }
+
+        if (roleName.equals("user") && uniqueIds.size() != 1) {
             throw new IllegalArgumentException("Un usuario con rol 'user' solo puede estar asignado a una sucursal.");
         }
 
-        Set<StoreEntity> stores = storeIds.stream()
-                .map(sid -> storeRepository.findById(sid)
-                        .orElseThrow(() -> new EntityNotFoundException("Sucursal no encontrada con ID: " + sid)))
-                .collect(Collectors.toSet());
+        // Buscar todas las sucursales de una sola vez
+        List<StoreEntity> foundStores = storeRepository.findAllById(uniqueIds);
         
-        user.setStores(stores);
+        if (foundStores.size() != uniqueIds.size()) {
+            Set<Long> foundIds = foundStores.stream().map(StoreEntity::getId).collect(Collectors.toSet());
+            List<Long> missingIds = uniqueIds.stream()
+                    .filter(id -> !foundIds.contains(id))
+                    .collect(Collectors.toList());
+            
+            throw new StoreNotFoundException("No se encontraron las siguientes sucursales: " + missingIds);
+        }
+        
+        user.setStores(new HashSet<>(foundStores));
     }
 
     private void validateOwnerRole() {
@@ -158,3 +172,4 @@ public class UserService {
         }
     }
 
+}

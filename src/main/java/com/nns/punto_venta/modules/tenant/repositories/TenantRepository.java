@@ -17,6 +17,8 @@ public interface  TenantRepository extends JpaRepository<TenantEntity, Long> {
 
     @Query("SELECT t FROM TenantEntity t WHERE t.name = :text OR t.email = :text")
     Optional<TenantEntity> findByNameOrEmail (@Param("text") String text);
+
+    Optional<TenantEntity> findByBusinessCode(String businessCode);
     
     @Query(value="SELECT create_tenant(:schemaName)", nativeQuery = true)
     void executeCreateTenantFunction(@Param("schemaName") String schemaName);

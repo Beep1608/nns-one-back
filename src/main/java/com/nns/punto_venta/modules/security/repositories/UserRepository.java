@@ -5,6 +5,7 @@ import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
@@ -18,6 +19,7 @@ public interface UserRepository extends JpaRepository<UserEntity, Integer> {
 
     boolean existsByUsername(String username);
 
+    @EntityGraph(attributePaths = {"roles", "stores"})
     Page<UserEntity> findAllByOrderByCreatedAtDesc(Pageable pageable);
 
 }

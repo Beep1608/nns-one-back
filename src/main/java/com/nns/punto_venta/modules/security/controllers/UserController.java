@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -28,6 +29,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/users")
@@ -68,7 +72,7 @@ public class UserController {
     @PostMapping
     @Operation(summary = "Crear un nuevo usuario", description = "Crea un nuevo usuario en el sistema.")
     @ApiResponse(responseCode = "201", description = "Usuario creado exitosamente",content=@Content(mediaType="application/json", schema=@Schema(implementation=UserResponseDto.class)))
-    public ResponseEntity<UserResponseDto> create(@Valid @ParameterObject UserRequestDto userDto) {
+    public ResponseEntity<UserResponseDto> create(@Valid @RequestBody UserRequestDto userDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(userService.createUser(userDto));
     }
 
@@ -77,17 +81,19 @@ public class UserController {
     @Operation(summary = "Actualizar un usuario existente", description = "Actualiza los datos de un usuario existente en el sistema.")
     @ApiResponse(responseCode = "200", description = "Usuario actualizado exitosamente",content=@Content(mediaType="application/json", schema=@Schema(implementation=UserUpdateRequestDto.class)))
     @ApiResponse(responseCode = "404", description = "Usuario no encontrado con ID:{id}")
-    public ResponseEntity<UserResponseDto> update(@PathVariable Integer id, @Valid @ParameterObject UserUpdateRequestDto userDto) {
+    public ResponseEntity<UserResponseDto> update(@PathVariable Integer id, @Valid @RequestBody UserUpdateRequestDto userDto) {
         return ResponseEntity.ok(userService.updateUser(id, userDto));
     }
 
     // Eliminar un usuario: DELETE http://localhost:8080/api/users/1
     @DeleteMapping("/{id}")
     @Operation(summary = "Eliminar un usuario (soft delete)", description = "Elimina un usuario específico del sistema según su ID.")
-    @ApiResponse(responseCode = "204", description = "Usuario eliminado exitosamente")
+    @ApiResponse(responseCode = "200", description = "Usuario eliminado exitosamente", content = @Content(mediaType = "application/json", schema = @Schema(example = "{\"message\": \"Empleado eliminado correctamente\"}")))
     @ApiResponse(responseCode = "404", description = "Usuario no encontrado con ID:{id}")
-    public ResponseEntity<Void> delete(@PathVariable Integer id) {
+    public ResponseEntity<Map<String, String>> delete(@PathVariable Integer id) {
         userService.deleteUser(id);
-        return ResponseEntity.noContent().build();
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Empleado eliminado correctamente");
+        return ResponseEntity.ok(response);
     }
 }
